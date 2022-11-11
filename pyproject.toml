@@ -1,0 +1,41 @@
+[build-system]
+requires = ["flit"]
+build-backend = "flit.buildapi"
+
+[project]
+name = "rosbag-topic-remove"
+authors = [{ name = "damienlarocque", email = "phicoltan@gmail.com" }]
+license = { file = "LICENSE" }
+requires-python = ">=3.9"
+dependencies = ["rosbags", "tqdm"]
+readme = "README.md"
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+]
+dynamic = ["version", "description"]
+
+[project.optional-dependencies]
+dev = ["black", "pylint", "bump2version"]
+
+[project.urls]
+Homepage = "https://github.com/IamPhytan/rosbag-topic-remove"
+"Repository on GitHub" = "https://github.com/IamPhytan/rosbag-topic-remove"
+"Repository on GitLab" = "https://gitlab.com/damienlarocque/rosbag-topic-remove"
+
+[project.scripts]
+rosbag-topic-remove = "rosbag_topic_remove.__main__:main"
+
+[tool.isort]
+profile = "black"
+
+[tool.black]
+line-length = 90
+
+[tool.pylint]
+[tool.pylint.messages_control]
+disable = "C0330, C0326"
+
+[tool.pylint.format]
+max-line-length = "90"
