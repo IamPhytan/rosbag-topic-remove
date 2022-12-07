@@ -1,51 +1,36 @@
-# rosbag-topic-compare
+# rosbag-topic-remove
 
 TODO: Change README after the code
 
-> Determine the topic consistency in a rosbag dataset
-
-This package is a rewriting of [`rosbag-compare`](https://github.com/IamPhytan/rosbag-compare) for rosbags in both ROS1 and ROS2.
+> Filter out topics from a rosbag
 
 ## Use case
 
-Say you have a bunch of rosbags inside a folder and you don't know whether or not all those rosbags have the same topics. `rosbag-topic-compare` will :
+Say you have too much topics in a rosbag (ROS1 or ROS2) and that you want to keep a copy of this rosbag without data from a specific sensor. `rosbag-topic-remove` will :
 
-* retrieve the topics contained in each rosbag
-* export a summary of the ros topics in a JSON file
-* plot the topics that are missing for each rosbag :
-
-![Summary of missing topics](preview.png)
+* Filter out topics based on their name
+* Filter out topics based on [glob](https://en.wikipedia.org/wiki/Glob_(programming))-like wildcard patterns
+* Preserve your original rosbag
+* Convert your rosbag from ROS1 to ROS2, if needed
 
 ## Installation
 
-`rosbag-compare` can be installed from PyPi :
+`rosbag-topic-remove` can be installed from PyPi :
 
 ```console
-$ pip install rosbag-topic-compare
-```
-
-Or, if you want the plotting feature:
-
-```console
-$ pip install rosbag-topic-compare[plot]
+pip install rosbag-topic-remove
 ```
 
 ## Usage
 
-`rosbag-topic-compare` can be used both as a command line application and in Python code.
+`rosbag-topic-remove` can be used both as a command line application and in Python code.
 
 ### Command line
 
-A basic use of `rosbag-topic-compare` is to simply call it with the path of the folder that contains rosbags. This will simply print out a YAML string with a summary of the comparison.
+A basic use of `rosbag-topic-remove` is to simply call it from the command line.
 
 ```console
-$ rosbag-topic-compare /path/to/folder/with/rosbags
-```
-
-You can also generate a figure that will show what topics are missing in each rosbag with the `--plot/-p` flag. This figure helps when you want to find out if all rosbags in a dataset contains all or some of the expected topics.
-
-```console
-$ rosbag-topic-compare -p /path/to/your/rosbag/dataset
+rosbag-topic-compare /path/to/folder/with/rosbags
 ```
 
 Here are all the CLI options of `rosbag-topic-compare`:
@@ -69,31 +54,33 @@ options:
 
 ### Python Code API
 
-You can also call `rosbag-topic-compare` directly into your Python code :
+You can also call `rosbag-topic-remove` directly into your Python code :
 
 ```py
-from rosbag_compare import BagTopicComparator
+from rosbag_topic_remove import BagTopicRemover
 
-data_path = "/path/to/folder/with/rosbags"
-rbag_comp = BagTopicComparator(data_path)
+data_path = "path/to/a/rosbag.bag"  # ROS1
+data_path = "path/to/a/rosbag"  # ROS2
+rbag_rem = BagTopicRemover(data_path)
 
-# This step may take time as it open each rosbag separately
-# Will show a progress bar
-rbag_comp.extract_data()
+# Change the input bag
+rbag_rem.inbag = "path/to/another/rosbag"
 
-# Export summary to a JSON file
-rbag_comp.export_metadata()  # Defaults to topics_<foldername>.json
-rbag_comp.export_metadata("topics.json")
-rbag_comp.export_metadata("topics.yaml")
+# Remove /cmd_vel
+rbag_rem.remove("/cmd_vel")
 
-# Generate a figure with the name of the
-# missing topics for each rosbag
-rbag_comp.plot()                               # Show figure
-rbag_comp.plot(img_path="topics_summary.jpg")  # Save figure to path
+# Remove /cmd_vel
+rbag_rem.remove("/cmd_vel")
 
-# Create a new comparator from exported metadata
-rbag_comp = BagTopicComparator.from_json("topics.json")
-rbag_comp = BagTopicComparator.from_yaml("topics.yaml")
+# Remove all camera info topics
+rbag_rem.remove("/*/camera_info")
+
+# Remove all topics from the IMU and from the GPS
+rbag_rem.remove(("/imu/*", "/gps/*"))
+
+# Export a rosbag with all topics filtered
+rbag_rem.export("path/to/save/this/filtered/rosbag.bag")  # ROS1
+rbag_rem.export("path/to/save/that/filtered/rosbag")  # ROS2
 ```
 
 ## Contributing
@@ -103,18 +90,18 @@ Pull requests are welcome and don't hesitate to open issues
 (Recommended) [flit](https://flit.pypa.io) is used to package this module. Development packages can be installed using `flit` :
 
 ```console
-$ python -m venv venv
-$ source venv/bin/activate
-$ pip install flit
-$ flit install
+python -m venv venv
+source venv/bin/activate
+pip install flit
+flit install
 ```
 
 (Alternative) Development requirements can be installed using pip :
 
 ```console
-$ python -m venv venv
-$ source venv/bin/activate
-$ pip install -r requirements/requirements-dev.txt
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements/requirements-dev.txt
 ```
 
 ## Acknowledgements

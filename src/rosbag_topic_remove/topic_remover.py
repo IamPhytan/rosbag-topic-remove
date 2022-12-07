@@ -7,12 +7,14 @@ from typing import TYPE_CHECKING
 
 from rosbags.rosbag1 import Reader as Reader1
 from rosbags.rosbag2 import Reader as Reader2
+from rosbags.rosbag1 import Writer as Writer1
+from rosbags.rosbag2 import Writer as Writer2
 from tqdm import tqdm
 
 import fnmatch
 
 if TYPE_CHECKING:
-    from typing import Sequence, Tuple
+    from typing import Sequence, Tuple, Type
 
 
 class BagTopicRemover:
@@ -20,6 +22,9 @@ class BagTopicRemover:
 
     def __init__(self, path: Path | str) -> None:
         self._inbag = Path(path)
+        self._is_ros1_reader: bool = None
+        self._is_ros1_writer: bool = None
+        self._intopics: Tuple[str] = None
 
     @property
     def inbag(self):
@@ -31,8 +36,27 @@ class BagTopicRemover:
         """Setter for `inbag`"""
         if Path(value).is_file():
             self._inbag = value
+            Reader = self.get_reader_class(self._inbag)
+            with Reader(self._inbag) as inbag:
+                self._intopics = tuple(inbag.topics.keys())
         else:
             raise ValueError(f"{value} is not an existing file")
+
+    def get_reader_class(self, filename: Path | str) -> Type[Reader1 | Reader2]:
+        """Return the reader class that corresponds to the filename
+        Needs the filename of the rosbag to read from
+        """
+        is_ros1 = Path(filename).suffix == ".bag"
+        self._is_ros1_reader = is_ros1
+        return Reader1 if is_ros1 else Reader2
+
+    def get_writer_class(self, filename: Path | str) -> Type[Writer1 | Writer2]:
+        """Return the writer class that corresponds to the filename
+        Needs the filename of the rosbag to write in
+        """
+        is_ros1 = Path(filename).suffix == ".bag"
+        self._is_ros1_writer = is_ros1
+        return Writer1 if is_ros1 else Writer2
 
     @staticmethod
     def filter_out_topics(
@@ -73,3 +97,13 @@ class BagTopicRemover:
             topic for topic in bag_topics if topic not in topics_to_remove
         )
         return filtered_topics
+
+    def remove(self, patterns: Sequence[str] | str):
+        """Remove topic patterns or specific topics from self._intopics
+
+        Args:
+            patterns: List, tuple of strings or string that contains a pattern or a specific topic name to remove from the bag
+        """
+        if isinstance(patterns, str):
+            patterns = (patterns,)
+        self._intopics = self.filter_out_topics(self._intopics, patterns)
