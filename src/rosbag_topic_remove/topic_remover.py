@@ -2,16 +2,16 @@
 
 from __future__ import annotations
 
+import fnmatch
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
+from rosbags.interfaces import ConnectionExtRosbag1, ConnectionExtRosbag2
 from rosbags.rosbag1 import Reader as Reader1
-from rosbags.rosbag2 import Reader as Reader2
 from rosbags.rosbag1 import Writer as Writer1
+from rosbags.rosbag2 import Reader as Reader2
 from rosbags.rosbag2 import Writer as Writer2
 from tqdm import tqdm
-
-import fnmatch
 
 if TYPE_CHECKING:
     from typing import Sequence, Tuple, Type
@@ -21,6 +21,11 @@ class BagTopicRemover:
     """Topic remover class to delete some topics from a rosbag"""
 
     def __init__(self, path: Path | str) -> None:
+        """Create a BagTopicRemover instance
+
+        Args:
+            path: Path to the input rosbag
+        """
         self._inbag = Path(path)
         self._is_ros1_reader: bool = None
         self._is_ros1_writer: bool = None
@@ -35,7 +40,7 @@ class BagTopicRemover:
     def inbag(self, value: Path | str):
         """Setter for `inbag`"""
         if Path(value).is_file():
-            self._inbag = value
+            self._inbag = Path(value)
             Reader = self.get_reader_class(self._inbag)
             with Reader(self._inbag) as inbag:
                 self._intopics = tuple(inbag.topics.keys())
@@ -98,7 +103,7 @@ class BagTopicRemover:
         )
         return filtered_topics
 
-    def remove(self, patterns: Sequence[str] | str):
+    def remove(self, patterns: Sequence[str] | str) -> None:
         """Remove topic patterns or specific topics from self._intopics
 
         Args:
@@ -107,3 +112,34 @@ class BagTopicRemover:
         if isinstance(patterns, str):
             patterns = (patterns,)
         self._intopics = self.filter_out_topics(self._intopics, patterns)
+
+    def export(self, path: Path | str = None, force_out: bool = False) -> None:
+        outpath = Path(path)
+        if outpath == self._inbag:
+            raise FileExistsError(f"Cannot use same file as input and output [{path}]")
+        if outpath.exists():
+            raise FileExistsError(
+                f"Path {path} already exists. "
+                f"Use 'force_out=True' or 'rosbag-topic-remove -f' to export to {path} even if output bag already exists."
+            )
+        Reader = self.get_reader_class(self.inbag)
+        Writer = self.get_writer_class(path)
+        with Reader(self.inbag) as reader, Writer(outpath) as writer:
+            conn_map = {}
+            ConnectionExt = (
+                ConnectionExtRosbag1 if self._is_ros1_writer else ConnectionExtRosbag2
+            )
+            for conn in reader.connections:
+                ext = cast(ConnectionExt, conn.ext)
+                conn_map[conn.id] = writer.add_connection(
+                    conn.topic,
+                    conn.msgtype,
+                    ext.serialization_format,
+                    ext.offered_qos_profiles,
+                )
+
+            for conn, timestamp, data in reader.messages():
+                if conn.topic in self._intopics:
+                    writer.write(conn_map[conn.id], timestamp, data)
+
+        print(f"[rosbag-topic-remove] Done ! Exported in {path}")
