@@ -114,10 +114,20 @@ class BagTopicRemover:
         self._intopics = self.filter_out_topics(self._intopics, patterns)
 
     def export(self, path: Path | str = None, force_out: bool = False) -> None:
+        """Export filtered rosbag to 'path'
+
+        Args:
+            path: Path to export the rosbag. Defaults to None.
+            force_out: Force output overwriting if path already exists. Defaults to False.
+
+        Raises:
+            FileExistsError: _description_
+            FileExistsError: _description_
+        """
         outpath = Path(path)
         if outpath == self._inbag:
             raise FileExistsError(f"Cannot use same file as input and output [{path}]")
-        if outpath.exists():
+        if outpath.exists() and not force_out:
             raise FileExistsError(
                 f"Path {path} already exists. "
                 f"Use 'force_out=True' or 'rosbag-topic-remove -f' to export to {path} even if output bag already exists."
