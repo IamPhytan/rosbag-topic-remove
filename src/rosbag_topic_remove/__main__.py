@@ -23,10 +23,11 @@ Available options are:
 
 options:
   -h, --help            show this help message and exit
-  -o OUTPUT, --output OUTPUT
-                        Output bag
-  -t TOPICS, --metadata METADATA
-                        Metadata summary output path
+  -o OUTBAG, --output OUTBAG, --outbag OUTBAG
+                        Filtered bag
+  -t TOPICS [TOPICS ...], --topics TOPICS [TOPICS ...]
+                        Topics to remove from the rosbag
+  -f, --force           Force output file overwriting
 
 Version:
 --------
@@ -70,7 +71,7 @@ def parse_arguments():
         "-f",
         "--force",
         action="store_true",
-        help="Force output overwriting",
+        help="Force output file overwriting",
     )
     return parser.parse_args()
 

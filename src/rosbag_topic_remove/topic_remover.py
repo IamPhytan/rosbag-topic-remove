@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import fnmatch
+import shutil
+import warnings
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
@@ -38,8 +40,9 @@ class BagTopicRemover:
     @inbag.setter
     def inbag(self, value: Path | str):
         """Setter for `inbag`"""
-        if Path(value).is_file():
-            self._inbag = Path(value)
+        vpath = Path(value)
+        if vpath.is_file() or vpath.is_dir():
+            self._inbag = vpath
             Reader = self.get_reader_class(self._inbag)
             with Reader(self._inbag) as inbag:
                 self._intopics = tuple(inbag.topics.keys())
@@ -121,11 +124,26 @@ class BagTopicRemover:
             patterns = (patterns,)
         self._intopics = self.filter_out_topics(self._intopics, patterns)
 
-    def export(self, path: Path | str = None, force_out: bool = False) -> None:
+    def delete_rosbag(self, path: Path | str):
+        """Function to delete a rosbag at path `path`, to use with caution
+
+        Args:
+            path: Path to rosbag to delete.
+        """
+        is_ros1 = path.is_file() and path.suffix == ".bag"
+        is_ros2 = path.is_dir() and len(tuple(path.glob("*.db3"))) > 0
+        if is_ros1:
+            path.unlink()
+        elif is_ros2:
+            shutil.rmtree(path)
+        else:
+            raise ValueError(f"Path {path} is not a valid rosbag")
+
+    def export(self, path: Path | str, force_out: bool = False) -> None:
         """Export filtered rosbag to 'path'
 
         Args:
-            path: Path to export the rosbag. Defaults to None.
+            path: Path to export the rosbag.
             force_out: Force output overwriting if path already exists. Defaults to False.
 
         Raises:
@@ -140,6 +158,11 @@ class BagTopicRemover:
                 f"Path {path} already exists. "
                 f"Use 'force_out=True' or 'rosbag-topic-remove -f' to export to {path} even if output bag already exists."
             )
+        if outpath.exists() and force_out:
+            warnings.warn(
+                f"Output path {outpath} already exists, output overwriting flag has been set, deleting old output file"
+            )
+            self.delete_rosbag(outpath)
         Reader = self.get_reader_class(self.inbag)
         Writer = self.get_writer_class(path)
         with Reader(self.inbag) as reader, Writer(outpath) as writer:

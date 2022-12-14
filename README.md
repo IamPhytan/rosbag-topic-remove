@@ -37,18 +37,19 @@ Here are all the CLI options of `rosbag-topic-remove`:
 
 ```console
 $ rosbag-topic-remove -h
-usage: rosbag-topic-remove [-h] [-m METADATA] [-p] [--fig FIG] bagfolder
+usage: rosbag-topic-remove [-h] [-o OUTBAG] [-t TOPICS [TOPICS ...]] [-f]
+                           inbag
 
 positional arguments:
-  bagfolder             Dataset directory path
+  inbag                 Input bag
 
 options:
   -h, --help            show this help message and exit
-  -m METADATA, --metadata METADATA
-                        Metadata summary output path
-  -p, --plot            Plotting mode : display a summary plot
-  --fig FIG, --summary-figure-path FIG
-                        Path for saving a topic consistency figure
+  -o OUTBAG, --output OUTBAG, --outbag OUTBAG
+                        Filtered bag
+  -t TOPICS [TOPICS ...], --topics TOPICS [TOPICS ...]
+                        Topics to remove from the rosbag
+  -f, --force           Force output file overwriting
 
 ```
 
