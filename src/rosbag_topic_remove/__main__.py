@@ -10,14 +10,14 @@ Usage:
 Remove topics from INBAG.bag,
     save the resulting rosbag in INBAG_filt.bag:
 
- $ rosbag-topic-compare INBAG.bag --topics /topic_to_remove
- $ rosbag-topic-compare INBAG.bag -t /camera*/*_raw /imu/*
+ $ rosbag-topic-remove INBAG.bag --topics /topic_to_remove
+ $ rosbag-topic-remove INBAG.bag -t /camera*/*_raw /imu/*
 
 Remove topics from INBAG.bag,
     save in OUTBAG.bag:
 
- $ rosbag-topic-compare INBAG.bag -o OUTBAG.bag --topics /cmd_vel
- $ rosbag-topic-compare INBAG.bag -o OUTBAG.bag -t /gps/*
+ $ rosbag-topic-remove INBAG.bag -o OUTBAG.bag --topics /cmd_vel
+ $ rosbag-topic-remove INBAG.bag -o OUTBAG.bag -t /gps/*
 
 Available options are:
 
@@ -27,9 +27,6 @@ options:
                         Output bag
   -t TOPICS, --metadata METADATA
                         Metadata summary output path
-  -p, --plot            Plotting mode : display a summary plot
-  --fig FIG, --summary-figure-path FIG
-                        Path for saving a topic consistency figure
 
 Version:
 --------
@@ -40,6 +37,63 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+from typing import Optional
 
 from . import utils as u
 from .topic_remover import BagTopicRemover
+
+
+def parse_arguments():
+    """Parse rosbag-topic-remove arguments"""
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "inbag",
+        type=u.path_type(),
+        help="Input bag",
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        "--outbag",
+        type=Optional[u.path_type(exists=False)],
+        dest="outbag",
+        help="Filtered bag",
+    )
+    parser.add_argument(
+        "-t",
+        "--topics",
+        type=str,
+        nargs="+",
+        help="Topics to remove from the rosbag",
+    )
+    parser.add_argument(
+        "-f",
+        "--force",
+        action="store_true",
+        help="Force output overwriting",
+    )
+    return parser.parse_args()
+
+
+def main():
+    """Main function"""
+    args = parse_arguments()
+    inpath = args.inbag
+    outpath = args.outbag
+
+    rosbag_rem = BagTopicRemover(inpath)
+    rosbag_rem.remove(args.topics)
+    if outpath:
+        rosbag_rem.export(outpath, force_out=args.force)
+    else:
+        # Default path:
+        # /path/to/my/rosbag => /path/to/my/rosbag_filt
+        # /path/to/my/rosbag.filt => /path/to/my/rosbag_filt.bag
+        inpath = Path(inpath)
+        def_outfile = f"{inpath.stem}_filt{inpath.suffix}"
+        default_outpath = inpath.parent / def_outfile
+        rosbag_rem.export(default_outpath, force_out=args.force)
+
+
+if __name__ == "__main__":
+    main()

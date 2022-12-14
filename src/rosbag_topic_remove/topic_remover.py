@@ -11,7 +11,6 @@ from rosbags.rosbag1 import Reader as Reader1
 from rosbags.rosbag1 import Writer as Writer1
 from rosbags.rosbag2 import Reader as Reader2
 from rosbags.rosbag2 import Writer as Writer2
-from tqdm import tqdm
 
 if TYPE_CHECKING:
     from typing import Sequence, Tuple, Type
@@ -26,10 +25,10 @@ class BagTopicRemover:
         Args:
             path: Path to the input rosbag
         """
-        self._inbag = Path(path)
+        self._intopics: Tuple[str] = None
         self._is_ros1_reader: bool = None
         self._is_ros1_writer: bool = None
-        self._intopics: Tuple[str] = None
+        self.inbag = Path(path)
 
     @property
     def inbag(self):
@@ -46,6 +45,11 @@ class BagTopicRemover:
                 self._intopics = tuple(inbag.topics.keys())
         else:
             raise ValueError(f"{value} is not an existing file")
+
+    @property
+    def topics(self):
+        """The topics property."""
+        return self._intopics
 
     def get_reader_class(self, filename: Path | str) -> Type[Reader1 | Reader2]:
         """Return the reader class that corresponds to the filename
@@ -81,6 +85,10 @@ class BagTopicRemover:
         >>> to_filter = ('/camera/image_raw')
         >>> BagTopicRemover.filter_out_topics(bag_topics, to_filter)
         ('/imu/data', '/imu/data_raw', '/imu/odom')
+        >>> bag_topics = ('/imu/data', '/imu/data_raw', '/imu/odom')
+        >>> to_filter = ()
+        >>> BagTopicRemover.filter_out_topics(bag_topics, to_filter)
+        ('/imu/data', '/imu/data_raw', '/imu/odom')
 
         Args:
             bag_topics: input rosbag's topics
@@ -103,7 +111,7 @@ class BagTopicRemover:
         )
         return filtered_topics
 
-    def remove(self, patterns: Sequence[str] | str) -> None:
+    def remove(self, patterns: Sequence[str] | str = ("",)) -> None:
         """Remove topic patterns or specific topics from self._intopics
 
         Args:

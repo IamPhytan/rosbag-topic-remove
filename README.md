@@ -30,14 +30,14 @@ pip install rosbag-topic-remove
 A basic use of `rosbag-topic-remove` is to simply call it from the command line.
 
 ```console
-rosbag-topic-compare /path/to/folder/with/rosbags
+rosbag-topic-remove /path/to/folder/with/rosbags
 ```
 
-Here are all the CLI options of `rosbag-topic-compare`:
+Here are all the CLI options of `rosbag-topic-remove`:
 
 ```console
-$ rosbag-topic-compare -h
-usage: rosbag-topic-compare [-h] [-m METADATA] [-p] [--fig FIG] bagfolder
+$ rosbag-topic-remove -h
+usage: rosbag-topic-remove [-h] [-m METADATA] [-p] [--fig FIG] bagfolder
 
 positional arguments:
   bagfolder             Dataset directory path
