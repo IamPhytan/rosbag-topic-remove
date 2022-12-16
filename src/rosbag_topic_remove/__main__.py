@@ -56,7 +56,6 @@ def parse_arguments():
         "-o",
         "--output",
         "--outbag",
-        type=Optional[u.path_type(exists=False)],
         dest="outbag",
         help="Filtered bag",
     )

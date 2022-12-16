@@ -13,6 +13,7 @@ from rosbags.rosbag1 import Reader as Reader1
 from rosbags.rosbag1 import Writer as Writer1
 from rosbags.rosbag2 import Reader as Reader2
 from rosbags.rosbag2 import Writer as Writer2
+from rosbags.convert.converter import upgrade_connection, downgrade_connection
 
 if TYPE_CHECKING:
     from typing import Sequence, Tuple, Type
@@ -171,13 +172,25 @@ class BagTopicRemover:
                 ConnectionExtRosbag1 if self._is_ros1_writer else ConnectionExtRosbag2
             )
             for conn in reader.connections:
-                ext = cast(ConnectionExt, conn.ext)
-                conn_map[conn.id] = writer.add_connection(
-                    conn.topic,
-                    conn.msgtype,
-                    ext.serialization_format,
-                    ext.offered_qos_profiles,
-                )
+                if conn.topic in self._intopics:
+                    ext = cast(ConnectionExt, conn.ext)
+                    if self._is_ros1_writer:
+                        conn_map[conn.id] = writer.add_connection(
+                            conn.topic,
+                            conn.msgtype,
+                            conn.msgdef,
+                            conn.md5sum,
+                            ext.callerid,
+                            ext.latching,
+                        )
+                    else:
+                        # ROS2
+                        conn_map[conn.id] = writer.add_connection(
+                            conn.topic,
+                            conn.msgtype,
+                            ext.serialization_format,
+                            ext.offered_qos_profiles,
+                        )
 
             for conn, timestamp, data in reader.messages():
                 if conn.topic in self._intopics:
