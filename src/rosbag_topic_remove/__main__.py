@@ -32,7 +32,7 @@ options:
 Version:
 --------
 
-- rosbag-topic-remove v0.0.0
+- rosbag-topic-remove v0.0.1
 """
 from __future__ import annotations
 
