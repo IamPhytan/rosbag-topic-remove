@@ -166,6 +166,10 @@ class BagTopicRemover:
             self.delete_rosbag(outpath)
         Reader = self.get_reader_class(self.inbag)
         Writer = self.get_writer_class(path)
+        if self._is_ros1_reader != self._is_ros1_writer:
+            raise NotImplementedError(
+                "Rosbag conversion (ROS1->ROS2 / ROS2->ROS1) is not supported. Use `rosbags` to convert your rosbag before using `rosbag-topic-remove`."
+            )
         with Reader(self.inbag) as reader, Writer(outpath) as writer:
             conn_map = {}
             ConnectionExt = (
