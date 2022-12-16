@@ -166,31 +166,44 @@ class BagTopicRemover:
             self.delete_rosbag(outpath)
         Reader = self.get_reader_class(self.inbag)
         Writer = self.get_writer_class(path)
+
         with Reader(self.inbag) as reader, Writer(outpath) as writer:
             conn_map = {}
-            ConnectionExt = (
-                ConnectionExtRosbag1 if self._is_ros1_writer else ConnectionExtRosbag2
-            )
-            for conn in reader.connections:
-                if conn.topic in self._intopics:
-                    ext = cast(ConnectionExt, conn.ext)
-                    if self._is_ros1_writer:
-                        conn_map[conn.id] = writer.add_connection(
-                            conn.topic,
-                            conn.msgtype,
-                            conn.msgdef,
-                            conn.md5sum,
-                            ext.callerid,
-                            ext.latching,
-                        )
-                    else:
-                        # ROS2
-                        conn_map[conn.id] = writer.add_connection(
-                            conn.topic,
-                            conn.msgtype,
-                            ext.serialization_format,
-                            ext.offered_qos_profiles,
-                        )
+            for rconn in reader.connections:
+                if self._is_ros1_reader == self._is_ros1_writer:
+                    # ROS1 => ROS1
+                    # ROS2 => ROS2
+                    wconn = rconn
+                elif self._is_ros1_reader:
+                    # ROS1 => ROS2
+                    wconn = upgrade_connection(rconn)
+                elif self._is_ros1_writer:
+                    # ROS2 => ROS1
+                    wconn = downgrade_connection(rconn)
+                else:
+                    raise NotImplementedError(
+                        "ROS1 and ROS2 bags are the only kind of bags that are supported by rosbag-topic-remove"
+                    )
+
+                if wconn.topic in self._intopics:
+                    if wconn.id not in conn_map:
+                        if self._is_ros1_writer:
+                            conn_map[wconn.id] = writer.add_connection(
+                                wconn.topic,
+                                wconn.msgtype,
+                                wconn.msgdef,
+                                wconn.md5sum,
+                                wconn.ext.callerid,
+                                wconn.ext.latching,
+                            )
+                        else:
+                            # ROS2
+                            conn_map[wconn.id] = writer.add_connection(
+                                wconn.topic,
+                                wconn.msgtype,
+                                wconn.ext.serialization_format,
+                                wconn.ext.offered_qos_profiles,
+                            )
 
             for conn, timestamp, data in reader.messages():
                 if conn.topic in self._intopics:
