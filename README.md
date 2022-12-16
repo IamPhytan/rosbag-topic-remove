@@ -1,7 +1,5 @@
 # rosbag-topic-remove
 
-TODO: Change README after the code
-
 > Filter out topics from a rosbag
 
 ## Use case

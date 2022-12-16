@@ -13,7 +13,6 @@ from rosbags.rosbag1 import Reader as Reader1
 from rosbags.rosbag1 import Writer as Writer1
 from rosbags.rosbag2 import Reader as Reader2
 from rosbags.rosbag2 import Writer as Writer2
-from rosbags.convert.converter import upgrade_connection, downgrade_connection
 
 if TYPE_CHECKING:
     from typing import Sequence, Tuple, Type

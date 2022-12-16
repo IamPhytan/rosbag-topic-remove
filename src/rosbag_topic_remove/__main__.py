@@ -38,7 +38,6 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
-from typing import Optional
 
 from . import utils as u
 from .topic_remover import BagTopicRemover
@@ -88,7 +87,7 @@ def main():
     else:
         # Default path:
         # /path/to/my/rosbag => /path/to/my/rosbag_filt
-        # /path/to/my/rosbag.filt => /path/to/my/rosbag_filt.bag
+        # /path/to/my/rosbag.bag => /path/to/my/rosbag_filt.bag
         inpath = Path(inpath)
         def_outfile = f"{inpath.stem}_filt{inpath.suffix}"
         default_outpath = inpath.parent / def_outfile
