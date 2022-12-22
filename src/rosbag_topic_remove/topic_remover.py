@@ -13,6 +13,7 @@ from rosbags.rosbag1 import Reader as Reader1
 from rosbags.rosbag1 import Writer as Writer1
 from rosbags.rosbag2 import Reader as Reader2
 from rosbags.rosbag2 import Writer as Writer2
+from tqdm import tqdm
 
 if TYPE_CHECKING:
     from typing import Sequence, Tuple, Type
@@ -195,8 +196,10 @@ class BagTopicRemover:
                             ext.offered_qos_profiles,
                         )
 
-            for conn, timestamp, data in reader.messages():
-                if conn.topic in self._intopics:
-                    writer.write(conn_map[conn.id], timestamp, data)
+            with tqdm(total=reader.message_count) as pbar:
+                for conn, timestamp, data in reader.messages():
+                    if conn.topic in self._intopics:
+                        writer.write(conn_map[conn.id], timestamp, data)
+                    pbar.update(1)
 
         print(f"[rosbag-topic-remove] Done ! Exported in {path}")
