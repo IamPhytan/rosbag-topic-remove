@@ -9,7 +9,7 @@ Say you have too much topics in a rosbag (ROS1 or ROS2) and that you want to kee
 * Filter out topics based on their name
 * Filter out topics based on [glob](https://en.wikipedia.org/wiki/Glob_(programming))-like wildcard patterns
 * Preserve your original rosbag
-* Convert your rosbag from ROS1 to ROS2, if needed
+<!-- * Convert your rosbag from ROS1 to ROS2, if needed -->
 
 ## Installation
 
@@ -28,7 +28,8 @@ pip install rosbag-topic-remove
 A basic use of `rosbag-topic-remove` is to simply call it from the command line.
 
 ```console
-rosbag-topic-remove /path/to/folder/with/rosbags
+rosbag-topic-remove /path/to/rosbag -t /topic/to_delete
+rosbag-topic-remove /path/to/rosbag -t *sensor*
 ```
 
 Here are all the CLI options of `rosbag-topic-remove`:
